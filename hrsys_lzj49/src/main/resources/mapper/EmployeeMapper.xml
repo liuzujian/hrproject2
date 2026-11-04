@@ -43,9 +43,4 @@
         DELETE FROM employee WHERE id = #{id}
     </delete>
 
-    <!-- 批量更新部门下的员工 -->
-    <update id="updateByDep" parameterType="int">
-        UPDATE employee SET dep_id = #{depId} WHERE dep_id = #{depId}
-    </update>
-
 </mapper>

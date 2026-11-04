@@ -1,37 +1,59 @@
--- 创建员工表的SQL脚本
--- 功能：为人力资源管理系统创建员工信息表
+-- ============================================================
+-- 人事管理系统数据库初始化脚本
+-- 数据库：hrsys1
+-- 说明：employee.dep_id 外键关联 department.id，
+--       建表顺序必须先 department 后 employee，删表顺序相反。
+-- ============================================================
 
--- 如果表已存在则删除
+CREATE DATABASE IF NOT EXISTS `hrsys1` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `hrsys1`;
+
+-- 先删子表，再删主表，避免外键约束报错
 DROP TABLE IF EXISTS `employee`;
+DROP TABLE IF EXISTS `department`;
 
--- 创建员工表
+-- ------------------------------------------------------------
+-- 部门表
+-- ------------------------------------------------------------
+CREATE TABLE `department` (
+    `id`     int(11) NOT NULL AUTO_INCREMENT COMMENT '部门ID，主键',
+    `name`   varchar(50) NOT NULL COMMENT '部门名称',
+    `number` int(11) NOT NULL COMMENT '部门编号',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_department_number` (`number`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='部门表';
+
+-- ------------------------------------------------------------
+-- 员工表
+-- ------------------------------------------------------------
 CREATE TABLE `employee` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '员工ID，主键',
-  `name` varchar(50) NOT NULL COMMENT '员工姓名',
-  `gender` varchar(10) NOT NULL COMMENT '员工性别',
-  `age` int(11) DEFAULT NULL COMMENT '员工年龄',
-  `department` varchar(50) NOT NULL COMMENT '员工部门',
-  `position` varchar(50) NOT NULL COMMENT '员工职位',
-  `salary` decimal(10,2) DEFAULT NULL COMMENT '员工薪资',
-  `hire_date` date DEFAULT NULL COMMENT '入职时间',
-  `email` varchar(100) DEFAULT NULL COMMENT '员工邮箱',
-  `phone` varchar(20) DEFAULT NULL COMMENT '员工电话',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_name` (`name`),
-  KEY `idx_department` (`department`),
-  KEY `idx_hire_date` (`hire_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='员工信息表';
+    `id`     int(11) NOT NULL AUTO_INCREMENT COMMENT '员工ID，主键',
+    `number` varchar(20)  DEFAULT NULL COMMENT '员工编号',
+    `name`   varchar(50)  NOT NULL COMMENT '员工姓名',
+    `gender` varchar(10)  DEFAULT NULL COMMENT '员工性别',
+    `age`    int(11)      DEFAULT NULL COMMENT '员工年龄',
+    `dep_id` int(11)      DEFAULT NULL COMMENT '所属部门ID',
+    PRIMARY KEY (`id`),
+    KEY `idx_employee_name` (`name`),
+    KEY `idx_employee_dep` (`dep_id`),
+    CONSTRAINT `fk_employee_department` FOREIGN KEY (`dep_id`) REFERENCES `department` (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='员工信息表';
 
--- 插入测试数据
-INSERT INTO `employee` (`name`, `gender`, `age`, `department`, `position`, `salary`, `hire_date`, `email`, `phone`) VALUES
-('张三', '男', 28, '技术部', 'Java开发工程师', 12000.00, '2023-01-15', 'zhangsan@company.com', '13800138001'),
-('李四', '女', 26, '技术部', '前端开发工程师', 11000.00, '2023-02-20', 'lisi@company.com', '13800138002'),
-('王五', '男', 30, '产品部', '产品经理', 15000.00, '2022-12-10', 'wangwu@company.com', '13800138003'),
-('赵六', '女', 24, '设计部', 'UI设计师', 9000.00, '2023-03-05', 'zhaoliu@company.com', '13800138004'),
-('钱七', '男', 32, '销售部', '销售经理', 13000.00, '2022-11-20', 'qianqi@company.com', '13800138005'),
-('孙八', '女', 27, '人事部', '人事专员', 8000.00, '2023-04-10', 'sunba@company.com', '13800138006'),
-('周九', '男', 29, '财务部', '会计师', 10000.00, '2023-01-25', 'zhoujiu@company.com', '13800138007'),
-('吴十', '女', 25, '技术部', '测试工程师', 9500.00, '2023-05-15', 'wushi@company.com', '13800138008');
+-- ------------------------------------------------------------
+-- 测试数据
+-- ------------------------------------------------------------
+INSERT INTO `department` (`name`, `number`)
+VALUES ('技术部', 1001),
+       ('产品部', 1002),
+       ('人事部', 1003),
+       ('财务部', 1004);
 
+INSERT INTO `employee` (`number`, `name`, `gender`, `age`, `dep_id`)
+VALUES ('E001', '张三', '男', 28, 1),
+       ('E002', '李四', '女', 26, 1),
+       ('E003', '王五', '男', 30, 2),
+       ('E004', '赵六', '女', 24, 3),
+       ('E005', '钱七', '男', 32, 4),
+       ('E006', '孙八', '女', 27, 3),
+       ('E007', '周九', '男', 29, 4),
+       ('E008', '吴十', '女', 25, 1);

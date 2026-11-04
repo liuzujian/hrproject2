@@ -14,6 +14,7 @@
 ## 目录
 
 - [项目简介](#项目简介)
+- [界面预览](#界面预览)
 - [功能特性](#功能特性)
 - [技术栈](#技术栈)
 - [项目结构](#项目结构)
@@ -37,6 +38,14 @@
 | --- | --- |
 | **部门管理** | 部门的增删改查，部门表与员工表通过 `dep_id` 关联 |
 | **员工管理** | 员工增删改查，支持按姓名模糊、性别、年龄、部门多条件组合查询 |
+
+---
+
+## 界面预览
+
+启动项目后访问 `http://localhost:8080/swagger-ui/index.html`，即可看到自动生成的接口文档，所有接口都能直接在页面上调试：
+
+![Swagger 接口文档](docs/images/swagger-ui.png)
 
 ---
 
@@ -73,6 +82,9 @@
 
 ```
 hrproject2/
+├── README.md
+├── LICENSE                        # MIT 开源协议
+├── docs/images/                   # README 用到的截图
 ├── pom.xml                        # 主工程（Spring Initializr 骨架）
 ├── mvnw / mvnw.cmd                # Maven Wrapper
 └── hrsys_lzj49/                   # ★ 业务子工程（实际运行的模块）
@@ -89,7 +101,7 @@ hrproject2/
         │   └── resources/
         │       ├── application.properties         # 数据源 / MyBatis / 日志配置
         │       ├── mapper/                        # MyBatis XML 映射文件
-        │       └── sql/employee_table.sql         # 建表脚本（早期版本，见下文说明）
+        │       └── sql/employee_table.sql         # 建库建表 + 测试数据脚本
         └── test/java/...                          # DAO 与 Service 单元测试
 ```
 
@@ -107,41 +119,15 @@ hrproject2/
 
 ### 2. 初始化数据库
 
-登录 MySQL 后执行：
+建库、建表、插入测试数据都写在同一个脚本里，直接执行即可：
 
-```sql
-CREATE DATABASE IF NOT EXISTS hrsys1 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE hrsys1;
-
--- 部门表
-CREATE TABLE department (
-    id     INT AUTO_INCREMENT PRIMARY KEY COMMENT '部门ID',
-    name   VARCHAR(50) NOT NULL COMMENT '部门名称',
-    number INT NOT NULL COMMENT '部门编号'
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '部门表';
-
--- 员工表（与实体类 / Mapper 保持一致）
-CREATE TABLE employee (
-    id     INT AUTO_INCREMENT PRIMARY KEY COMMENT '员工ID',
-    number VARCHAR(20) COMMENT '员工编号',
-    name   VARCHAR(50) NOT NULL COMMENT '员工姓名',
-    gender VARCHAR(10) COMMENT '员工性别',
-    age    INT COMMENT '员工年龄',
-    dep_id INT COMMENT '所属部门ID',
-    CONSTRAINT fk_employee_department FOREIGN KEY (dep_id) REFERENCES department (id)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '员工信息表';
-
--- 测试数据
-INSERT INTO department (name, number) VALUES ('技术部', 1001), ('产品部', 1002), ('人事部', 1003);
-
-INSERT INTO employee (number, name, gender, age, dep_id) VALUES
-('E001', '张三', '男', 28, 1),
-('E002', '李四', '女', 26, 1),
-('E003', '王五', '男', 30, 2),
-('E004', '赵六', '女', 24, 3);
+```bash
+mysql -u root -p < hrsys_lzj49/src/main/resources/sql/employee_table.sql
 ```
 
-> 仓库里的 `src/main/resources/sql/employee_table.sql` 是项目早期版本（`employee` 表用的是 `department`/`salary` 等字段），**与当前的 Employee 实体和 Mapper 不匹配**，请以本节的 DDL 为准。
+也可以用 Navicat / DataGrip 打开 `hrsys_lzj49/src/main/resources/sql/employee_table.sql` 整体运行。
+
+脚本会创建 `hrsys1` 数据库、`department` / `employee` 两张表，并插入 4 个部门 + 8 名员工的测试数据。
 
 ### 3. 修改数据源配置
 
@@ -232,6 +218,24 @@ curl -X PUT http://localhost:8080/employee/update \
 
 ## 数据模型
 
+```mermaid
+erDiagram
+    DEPARTMENT ||--o{ EMPLOYEE : "一个部门包含多名员工"
+    DEPARTMENT {
+        int id PK "部门ID"
+        varchar name "部门名称"
+        int number UK "部门编号"
+    }
+    EMPLOYEE {
+        int id PK "员工ID"
+        varchar number "员工编号"
+        varchar name "员工姓名"
+        varchar gender "性别"
+        int age "年龄"
+        int dep_id FK "所属部门ID"
+    }
+```
+
 ### Department（部门）
 
 | 字段 | 类型 | 说明 |
@@ -289,9 +293,8 @@ cd hrsys_lzj49
 
 ## 已知问题与 TODO
 
-- [ ] `sql/employee_table.sql` 是早期版本，字段与当前实体不一致，待更新为本 README 中的 DDL
-- [ ] `EmployeeMapper.updateByDep` 的 SQL 为 `SET dep_id = #{depId} WHERE dep_id = #{depId}`，实际不会修改任何数据，属于未完成功能
 - [ ] 接口未做统一返回体（`Result<T>`）封装，也未接入参数校验（`@Valid`）与全局异常处理
+- [ ] 删除仍有关联员工的部门时会因外键约束失败，尚未做"先转移员工再删除"的处理
 - [ ] 数据库密码明文写在 `application.properties` 中，生产环境应改用环境变量或配置中心
 - [ ] 缺少分页查询与前端页面
 
@@ -299,7 +302,7 @@ cd hrsys_lzj49
 
 ## 许可证
 
-本项目基于 [MIT License](https://opensource.org/licenses/MIT) 开源，可自由用于学习与参考。
+本项目基于 [MIT License](LICENSE) 开源，可自由用于学习与参考。
 
 ---
 

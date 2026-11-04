@@ -23,7 +23,4 @@ public interface EmployeeDao {
 
     // 删除员工
     int delete(int id);
-
-    // 批量更新部门下的所有员工
-    int updateByDep(int depId);
 }
